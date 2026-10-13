@@ -1,0 +1,56 @@
+server:
+  port: 8081
+  servlet:
+    encoding:
+      charset: UTF-8
+      force: true
+
+spring:
+  application:
+    name: ai-chat-demo
+  jackson:
+    default-property-inclusion: non_null
+
+# LangChain4j 多模型配置(均可通过环境变量覆盖)
+ai:
+  primary:
+    provider: siliconflow
+    base-url: ${AI_PRIMARY_BASE_URL:https://api.siliconflow.cn/v1}
+    api-key: ${AI_PRIMARY_API_KEY:YOUR_SILICONFLOW_KEY}
+    model: ${AI_PRIMARY_MODEL:deepseek-ai/DeepSeek-V3.2}
+    temperature: 0.7
+    max-tokens: 2048
+  secondary:
+    provider: siliconflow
+    base-url: ${AI_SECONDARY_BASE_URL:https://api.siliconflow.cn/v1}
+    api-key: ${AI_SECONDARY_API_KEY:YOUR_SILICONFLOW_KEY}
+    model: ${AI_SECONDARY_MODEL:Qwen/Qwen2.5-72B-Instruct}
+    temperature: 0.5
+    max-tokens: 2048
+  router:
+    # 复杂问题 / 长上下文走 primary(DeepSeek-V3.2);简单问题走 secondary(Qwen)
+    short-message-threshold: 50
+    timeout-ms: 30000
+    max-retries: 2
+  memory:
+    # 会话短期窗口:保留最近 20 条消息
+    short-term-window: 20
+    # 长期摘要:每 10 轮总结一次,摘要上限 800 token
+    summary-trigger: 10
+    summary-max-tokens: 800
+  rag:
+    # 简易 RAG:启动时加载知识文档到内存向量库
+    knowledge-file: classpath:prompts/knowledge.txt
+    chunk-size: 200
+    chunk-overlap: 30
+    top-k: 3
+  hallucination:
+    # 过敏规则(模拟 2025-07 真实项目中的过敏校验)
+    allergen-keywords: "花生,海鲜,虾,蟹,芒果,鸡蛋,牛奶,大豆,小麦"
+    # skip-retry 次数上限
+    max-retries: 2
+
+logging:
+  level:
+    com.demo: DEBUG
+    dev.langchain4j: INFO
